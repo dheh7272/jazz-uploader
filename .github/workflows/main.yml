@@ -15,8 +15,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install playwright
+          pip install yt-dlp playwright nest-asyncio
           python -m playwright install --with-deps chromium
 
       - name: Run Bot
