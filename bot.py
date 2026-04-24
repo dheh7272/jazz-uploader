@@ -1,38 +1,62 @@
 import os
 import asyncio
-import nest_asyncio
+import requests
 from playwright.async_api import async_playwright
 
-# Nest asyncio for handling event loops
-nest_asyncio.apply()
+# GitHub Secrets se information uthana
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+JAZZ_NUM = os.environ.get("JAZZ_NUMBER")
+
+def send_to_telegram(text):
+    # Sukuna Bot aapko message bhejay ga
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={text}"
+    requests.get(url)
+
+def get_otp_from_telegram():
+    # Ye aapke reply ka wait karega
+    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+    last_id = -1
+    print("Sukuna is waiting for OTP on Telegram...")
+    while True:
+        try:
+            data = requests.get(url).json()
+            if data["result"]:
+                msg = data["result"][-1]
+                if msg["update_id"] > last_id:
+                    text = msg["message"]["text"]
+                    if text.isdigit():
+                        return text
+        except:
+            pass
+        asyncio.sleep(2)
 
 async def run_bot():
-    # Aapka number GitHub Secrets se uthayega
-    jazz_number = os.environ.get("JAZZ_NUMBER")
-    
-    if not jazz_number:
-        print("Ghalati: JAZZ_NUMBER nahi mila. Please Settings mein Secret add karein.")
-        return
-
     async with async_playwright() as p:
-        print("Bot shuru ho raha hai...")
         browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context()
-        page = await context.new_page()
-
+        page = await browser.new_page()
         try:
-            # JazzDrive ya login page par jana
-            print(f"Logging in with: {jazz_number}")
-            await page.goto("https://jazzdrive.com.pk/login") # Yahan apni asli URL check kar lein
+            print("Opening JazzDrive...")
+            await page.goto("https://jazzdrive.com.pk/login")
             
-            # Login ka baki code jo aapne pehle banaya tha wo yahan aayega
-            # Filhal ye bot ko login ki koshish dikhayega
+            # Entering Number
+            await page.fill("input[type='tel']", JAZZ_NUM)
+            await page.click("button[type='submit']")
             
-            print("Bot kamyabi se chal raha hai!")
+            # Sending message to you
+            send_to_telegram(f"Kareem bhai, Sukuna is ready! JazzDrive ne OTP bheja hai. Jaldi se yahan OTP likh kar send karein:")
+            
+            # Waiting for your reply on Telegram
+            otp = get_otp_from_telegram()
+            
+            # Entering OTP
+            await page.fill("input[name='otp']", otp)
+            await page.click("button#login-btn")
+            
+            send_to_telegram("Sukuna says: Login Successful! ✅")
             
         except Exception as e:
-            print(f"Error aaya: {e}")
-        
+            send_to_telegram(f"Error: {e}")
         finally:
             await browser.close()
 
