@@ -1,24 +1,25 @@
 name: Kareem Bot 24h
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 */6 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-          playwright install chromium
-          playwright install-deps
-      - name: Run Uploader
-        run: python bot.py
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Run Bot
         env:
           JAZZ_NUMBER: ${{ secrets.JAZZ_NUMBER }}
+        run: python bot.py
