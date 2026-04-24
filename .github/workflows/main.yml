@@ -7,15 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
           pip install playwright
-          playwright install chromium --with-deps
+          playwright install --with-deps chromium
+
       - name: Run Bot
         env:
           JAZZ_NUMBER: ${{ secrets.JAZZ_NUMBER }}
